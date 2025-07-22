@@ -7,16 +7,6 @@ const sellerSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
-  shopName: {
-    type: String,
-    required: [true, 'Please provide a shop name'],
-    trim: true,
-    maxlength: [100, 'Shop name cannot be more than 100 characters']
-  },
-  description: {
-    type: String,
-    maxlength: [500, 'Description cannot be more than 500 characters']
-  },
   logo: {
     type: String,
     default: ''
@@ -25,16 +15,6 @@ const sellerSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
-  address: {
-    street: String,
-    city: String,
-    state: String,
-    zipCode: String,
-    country: {
-      type: String,
-      default: 'United States'
-    }
-  },
   phone: {
     type: String,
     required: [true, 'Please provide a phone number']
@@ -42,25 +22,6 @@ const sellerSchema = new mongoose.Schema({
   email: {
     type: String,
     required: [true, 'Please provide an email']
-  },
-  website: {
-    type: String,
-    default: ''
-  },
-  socialMedia: {
-    facebook: String,
-    twitter: String,
-    instagram: String,
-    linkedin: String
-  },
-  businessInfo: {
-    businessType: {
-      type: String,
-      enum: ['individual', 'corporation', 'partnership', 'llc'],
-      default: 'individual'
-    },
-    taxId: String,
-    businessLicense: String
   },
   isApproved: {
     type: Boolean,

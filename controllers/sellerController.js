@@ -10,7 +10,7 @@ exports.register = async (req, res) => {
   try {
     // Find or create user (for demo, assume user is already registered and authenticated)
     // In production, you may want to link this to the logged-in user or create a new user
-    const { email, phone, password, businessName, businessType, businessDescription, website, address, city, state, zipCode, country, taxId, businessLicense, categories, firstName, lastName } = req.body;
+    const { email, phone, password, name } = req.body;
 
     // Check if user already exists
     let user = await User.findOne({ email });
@@ -20,7 +20,7 @@ exports.register = async (req, res) => {
 
     // Create new user with role 'seller'
     user = await User.create({
-      name: (firstName && lastName) ? `${firstName} ${lastName}` : businessName,
+      name,
       email,
       password,
       role: 'seller',
@@ -31,22 +31,8 @@ exports.register = async (req, res) => {
     const seller = new Seller({
       userId: user._id, // associate with new user
       email,
+      name,
       phone,
-      shopName: businessName,
-      description: businessDescription,
-      address: {
-        street: address,
-        city,
-        state,
-        zipCode,
-        country
-      },
-      businessInfo: {
-        businessType,
-        taxId,
-        businessLicense
-      },
-      categories: [], // You can map category names to IDs if needed
       isApproved: false // Pending approval
     });
     await seller.save();
@@ -75,132 +61,6 @@ exports.getProducts = async (req, res) => {
 };
 
 // Create a new product for the current seller
-exports.createProduct = async (req, res) => {
-  try {
-    const seller = await Seller.findOne({ userId: req.user._id });
-    if (!seller) return res.status(404).json({ message: 'Seller not found' });
-
-    let imageUrls = [];
-    if (req.files && req.files.length > 0) {
-      for (const file of req.files) {
-        try {
-          const uploadResult = await new Promise((resolve, reject) => {
-            const stream = cloudinary.uploader.upload_stream({ folder: 'products' }, (error, result) => {
-              if (error) return reject(error);
-              resolve(result);
-            });
-            stream.end(file.buffer);
-          });
-          imageUrls.push({ url: uploadResult.secure_url });
-        } catch (uploadError) {
-          console.error('Image upload failed:', uploadError);
-          return res.status(500).json({ message: 'Image upload failed', error: uploadError.message });
-        }
-      }
-    }
-    // Fallback to default image if no image uploaded
-    if (imageUrls.length === 0) {
-      imageUrls = [{ url: 'https://res.cloudinary.com/demo/image/upload/v1690000000/products/default-product.png' }];
-    }
-
-    let categoryId = req.body.category;
-    if (req.body.customCategory) {
-      // Create a new category if customCategory is provided
-      const slug = req.body.customCategory.toLowerCase().replace(/\s+/g, '-');
-      let category = await Category.findOne({ slug });
-      if (!category) {
-        category = await Category.create({ name: req.body.customCategory, slug });
-      }
-      categoryId = category._id;
-    }
-
-    // Parse and convert fields
-    const {
-      name, description, shortDescription, price, comparePrice, subCategory, brand, sku, stock, lowStockThreshold, weight, dimensions, variants, tags, shippingInfo, seo
-    } = req.body;
-
-    // Convert numeric fields
-    const priceNum = price ? Number(price) : undefined;
-    const comparePriceNum = comparePrice ? Number(comparePrice) : undefined;
-    const stockNum = stock ? Number(stock) : undefined;
-    const lowStockThresholdNum = lowStockThreshold ? Number(lowStockThreshold) : undefined;
-    const weightNum = weight ? Number(weight) : undefined;
-
-    // Parse features and specifications
-    let featuresArr = [];
-    if (req.body.features) {
-      featuresArr = typeof req.body.features === 'string'
-        ? req.body.features.split(',').map(f => f.trim()).filter(Boolean)
-        : req.body.features;
-    }
-    let specificationsArr = [];
-    if (req.body.specifications) {
-      try {
-        specificationsArr = typeof req.body.specifications === 'string'
-          ? JSON.parse(req.body.specifications)
-          : req.body.specifications;
-      } catch (e) {
-        specificationsArr = [];
-      }
-    }
-
-    // Parse category and subCategory as ObjectId
-    let subCategoryId = req.body.subCategory;
-    if (categoryId && !mongoose.Types.ObjectId.isValid(categoryId)) {
-      return res.status(400).json({ message: 'Invalid category ID' });
-    }
-    if (subCategoryId && !mongoose.Types.ObjectId.isValid(subCategoryId)) {
-      return res.status(400).json({ message: 'Invalid subCategory ID' });
-    }
-
-    // Parse variants if present
-    let variantsArr = [];
-    if (variants) {
-      try {
-        variantsArr = typeof variants === 'string' ? JSON.parse(variants) : variants;
-      } catch (e) {
-        variantsArr = [];
-      }
-    }
-
-    const product = new Product({
-      name,
-      description,
-      shortDescription,
-      price: priceNum,
-      comparePrice: comparePriceNum,
-      images: imageUrls,
-      category: categoryId,
-      subCategory: subCategoryId,
-      brand,
-      seller: seller._id,
-      sku,
-      stock: stockNum,
-      lowStockThreshold: lowStockThresholdNum,
-      weight: weightNum,
-      dimensions,
-      variants: variantsArr,
-      specifications: specificationsArr,
-      features: featuresArr,
-      tags,
-      shippingInfo,
-      seo,
-      isActive: true,
-      isApproved: false // Admin approval required
-    });
-    await product.save();
-    res.status(201).json(product);
-  } catch (error) {
-    console.error('Product creation error:', error);
-    if (error.code === 11000 && error.keyPattern && error.keyPattern.sku) {
-      return res.status(400).json({ message: 'SKU must be unique. A product with this SKU already exists.' });
-    }
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({ message: error.message, errors: error.errors });
-    }
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-};
 // exports.createProduct = async (req, res) => {
 //   try {
 //     const seller = await Seller.findOne({ userId: req.user._id });
@@ -219,18 +79,19 @@ exports.createProduct = async (req, res) => {
 //           });
 //           imageUrls.push({ url: uploadResult.secure_url });
 //         } catch (uploadError) {
+//           console.error('Image upload failed:', uploadError);
 //           return res.status(500).json({ message: 'Image upload failed', error: uploadError.message });
 //         }
 //       }
 //     }
-
-//     // Fallback to default image
+//     // Fallback to default image if no image uploaded
 //     if (imageUrls.length === 0) {
 //       imageUrls = [{ url: 'https://res.cloudinary.com/demo/image/upload/v1690000000/products/default-product.png' }];
 //     }
 
 //     let categoryId = req.body.category;
 //     if (req.body.customCategory) {
+//       // Create a new category if customCategory is provided
 //       const slug = req.body.customCategory.toLowerCase().replace(/\s+/g, '-');
 //       let category = await Category.findOne({ slug });
 //       if (!category) {
@@ -239,29 +100,176 @@ exports.createProduct = async (req, res) => {
 //       categoryId = category._id;
 //     }
 
+//     // Parse and convert fields
+//     const {
+//       name, description, shortDescription, price, comparePrice, subCategory, brand, sku, stock, lowStockThreshold, weight, dimensions, variants, tags, shippingInfo, seo
+//     } = req.body;
+
+//     // Convert numeric fields
+//     const priceNum = price ? Number(price) : undefined;
+//     const comparePriceNum = comparePrice ? Number(comparePrice) : undefined;
+//     const stockNum = stock ? Number(stock) : undefined;
+//     const lowStockThresholdNum = lowStockThreshold ? Number(lowStockThreshold) : undefined;
+//     const weightNum = weight ? Number(weight) : undefined;
+
+//     // Parse features and specifications
+//     let featuresArr = [];
+//     if (req.body.features) {
+//       featuresArr = typeof req.body.features === 'string'
+//         ? req.body.features.split(',').map(f => f.trim()).filter(Boolean)
+//         : req.body.features;
+//     }
+//     let specificationsArr = [];
+//     if (req.body.specifications) {
+//       try {
+//         specificationsArr = typeof req.body.specifications === 'string'
+//           ? JSON.parse(req.body.specifications)
+//           : req.body.specifications;
+//       } catch (e) {
+//         specificationsArr = [];
+//       }
+//     }
+
+//     // Parse category and subCategory as ObjectId
+//     let subCategoryId = req.body.subCategory;
 //     if (categoryId && !mongoose.Types.ObjectId.isValid(categoryId)) {
 //       return res.status(400).json({ message: 'Invalid category ID' });
 //     }
+//     if (subCategoryId && !mongoose.Types.ObjectId.isValid(subCategoryId)) {
+//       return res.status(400).json({ message: 'Invalid subCategory ID' });
+//     }
+
+//     // Parse variants if present
+//     let variantsArr = [];
+//     if (variants) {
+//       try {
+//         variantsArr = typeof variants === 'string' ? JSON.parse(variants) : variants;
+//       } catch (e) {
+//         variantsArr = [];
+//       }
+//     }
 
 //     const product = new Product({
+//       name,
+//       description,
+//       shortDescription,
+//       price: priceNum,
+//       comparePrice: comparePriceNum,
 //       images: imageUrls,
 //       category: categoryId,
+//       subCategory: subCategoryId,
+//       brand,
 //       seller: seller._id,
+//       sku,
+//       stock: stockNum,
+//       lowStockThreshold: lowStockThresholdNum,
+//       weight: weightNum,
+//       dimensions,
+//       variants: variantsArr,
+//       specifications: specificationsArr,
+//       features: featuresArr,
+//       tags,
+//       shippingInfo,
+//       seo,
 //       isActive: true,
-//       isApproved: false
+//       isApproved: false // Admin approval required
 //     });
-
 //     await product.save();
 //     res.status(201).json(product);
 //   } catch (error) {
 //     console.error('Product creation error:', error);
+//     if (error.code === 11000 && error.keyPattern && error.keyPattern.sku) {
+//       return res.status(400).json({ message: 'SKU must be unique. A product with this SKU already exists.' });
+//     }
+//     if (error.name === 'ValidationError') {
+//       return res.status(400).json({ message: error.message, errors: error.errors });
+//     }
 //     res.status(500).json({ message: 'Server error', error: error.message });
 //   }
 // };
 
+exports.createProduct = async (req, res) => {
+  try {
+    const seller = await Seller.findOne({ userId: req.user._id });
+    if (!seller) return res.status(404).json({ message: 'Seller not found' });
 
+    // Image handling (optional – fallback image if nothing uploaded)
+    let imageUrls = [];
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        try {
+          const uploadResult = await new Promise((resolve, reject) => {
+            const stream = cloudinary.uploader.upload_stream({ folder: 'products' }, (error, result) => {
+              if (error) return reject(error);
+              resolve(result);
+            });
+            stream.end(file.buffer);
+          });
+          imageUrls.push({ url: uploadResult.secure_url });
+        } catch (uploadError) {
+          console.error('Image upload failed:', uploadError);
+          return res.status(500).json({ message: 'Image upload failed', error: uploadError.message });
+        }
+      }
+    }
 
-// Update a product for the current seller
+    // Fallback image
+    if (imageUrls.length === 0) {
+      imageUrls = [{ url: 'https://res.cloudinary.com/demo/image/upload/v1690000000/products/default-product.png' }];
+    }
+
+    // Handle category
+    let categoryId = req.body.category;
+    if (req.body.customCategory) {
+      const slug = req.body.customCategory.toLowerCase().replace(/\s+/g, '-');
+      let category = await Category.findOne({ slug });
+      if (!category) {
+        category = await Category.create({ name: req.body.customCategory, slug });
+      }
+      categoryId = category._id;
+    }
+
+    // Validate category and subCategory IDs
+    if (categoryId && !mongoose.Types.ObjectId.isValid(categoryId)) {
+      return res.status(400).json({ message: 'Invalid category ID' });
+    }
+
+    const subCategoryId = req.body.subCategory;
+    if (subCategoryId && !mongoose.Types.ObjectId.isValid(subCategoryId)) {
+      return res.status(400).json({ message: 'Invalid subCategory ID' });
+    }
+
+    // Required fields
+    const { name, price } = req.body;
+
+    if (!name || !price || !categoryId || !subCategoryId) {
+      return res.status(400).json({ message: 'Name, price, category, and subCategory are required.' });
+    }
+
+    const priceNum = Number(price);
+    if (isNaN(priceNum)) {
+      return res.status(400).json({ message: 'Price must be a number.' });
+    }
+
+    const product = new Product({
+      name,
+      price: priceNum,
+      images: imageUrls,
+      category: categoryId,
+      subCategory: subCategoryId,
+      seller: seller._id,
+      isActive: true,
+      isApproved: false, // Requires admin approval
+    });
+
+    await product.save();
+    res.status(201).json(product);
+  } catch (error) {
+    console.error('Product creation error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 
 
 exports.updateProduct = async (req, res) => {

@@ -415,6 +415,7 @@ exports.deleteVariantOption = asyncHandler(async (req, res) => {
   }
 
   variant.options.splice(optionIndex, 1);
+  
   // If no options left, remove the entire variant group
   if (variant.options.length === 0) {
     product.variants = product.variants.filter(v => v.name !== variantName);
