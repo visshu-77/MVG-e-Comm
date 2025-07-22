@@ -1,5 +1,9 @@
 # Multi-Vendor E-commerce Platform (Amazon Clone)
 
+
+
+checking git connection 
+
 A comprehensive multi-vendor e-commerce platform built with the MERN stack, featuring role-based access control for customers, sellers, and administrators.
 
 ## 🚀 Features
