@@ -558,17 +558,19 @@ const SellerDashboard = () => {
                     <form onSubmit={e => {
                       e.preventDefault();
                       if (!newProduct.mainCategory) {
+                        setError('Please select a main category for your product.');
+                        return;
+                      }
+                      if (!newProduct.subCategory) {
                         setError('Please select a subcategory for your product.');
                         return;
                       }
                       setError('');
                       handleAddProduct(e);
                     }} encType="multipart/form-data" className="space-y-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 gap-4">
                         <input type="text" className="form-input" placeholder="Product Name" value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} required />
-                        <input type="text" className="form-input" placeholder="Brand" value={newProduct.brand} onChange={e => setNewProduct({ ...newProduct, brand: e.target.value })} required />
-                        <input type="text" className="form-input" placeholder="SKU" value={newProduct.sku} onChange={e => setNewProduct({ ...newProduct, sku: e.target.value })} required />
-                        <div className="sm:col-span-2">
+                        <div>
                           <label className="block text-gray-700 font-medium mb-1">Select Main Category</label>
                           <select
                             className="form-input w-full mb-2"
@@ -597,72 +599,8 @@ const SellerDashboard = () => {
                             </div>
                           )}
                         </div>
+                        <input type="number" className="form-input" placeholder="Price" value={newProduct.price} onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} required min="0" />
                       </div>
-                      <input type="number" className="form-input" placeholder="Price" value={newProduct.price} onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} required min="0" />
-                      <input type="number" className="form-input" placeholder="Original Price (MRP)" value={newProduct.comparePrice} onChange={e => setNewProduct({ ...newProduct, comparePrice: e.target.value })} min="0" />
-                      <input type="number" className="form-input" placeholder="Stock" value={newProduct.stock} onChange={e => setNewProduct({ ...newProduct, stock: e.target.value })} required min="0" />
-                      <textarea className="form-input" placeholder="Description" value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} required />
-                      <input type="text" className="form-input" placeholder="Key Features (comma separated)" value={newProduct.features} onChange={e => setNewProduct({ ...newProduct, features: e.target.value })} />
-                      <div>
-                        {newProduct.specifications.map((spec, idx) => (
-                          <div key={idx} className="flex flex-col sm:flex-row gap-2 mb-2">
-                            <input type="text" className="form-input flex-1" placeholder="Spec Name" value={spec.key} onChange={e => {
-                              const specs = [...newProduct.specifications];
-                              specs[idx].key = e.target.value;
-                              setNewProduct({ ...newProduct, specifications: specs });
-                            }} />
-                            <input type="text" className="form-input flex-1" placeholder="Spec Value" value={spec.value} onChange={e => {
-                              const specs = [...newProduct.specifications];
-                              specs[idx].value = e.target.value;
-                              setNewProduct({ ...newProduct, specifications: specs });
-                            }} />
-                            <button type="button" onClick={() => {
-                              const specs = newProduct.specifications.filter((_, i) => i !== idx);
-                              setNewProduct({ ...newProduct, specifications: specs });
-                            }} className="text-red-500">Remove</button>
-                          </div>
-                        ))}
-                        <button type="button" onClick={() => setNewProduct({ ...newProduct, specifications: [...newProduct.specifications, { key: '', value: '' }] })} className="text-blue-600 mb-2">+ Add Specification</button>
-                      </div>
-                      <input type="file" accept="image/*" multiple onChange={e => {
-                        const newFiles = Array.from(e.target.files);
-                        // Combine existing and new files, filter duplicates by name+size, and limit to 5
-                        setImageFiles(prev => {
-                          const combined = [...prev, ...newFiles];
-                          const unique = [];
-                          const seen = new Set();
-                          for (const file of combined) {
-                            const key = file.name + '_' + file.size;
-                            if (!seen.has(key)) {
-                              unique.push(file);
-                              seen.add(key);
-                            }
-                            if (unique.length === 5) break;
-                          }
-                          return unique;
-                        });
-                      }} required />
-                      {imageFiles.length > 0 && (
-                        <div className="flex gap-2 mt-2 flex-wrap">
-                          {imageFiles.map((file, idx) => (
-                            <div key={idx} className="relative group w-16 h-16">
-                              <img
-                                src={URL.createObjectURL(file)}
-                                alt={`Preview ${idx + 1}`}
-                                className="w-16 h-16 object-cover rounded border"
-                              />
-                              <button
-                                type="button"
-                                className="absolute top-0 right-0 bg-white bg-opacity-80 rounded-full p-1 text-xs text-red-600 hover:text-red-800 group-hover:visible invisible"
-                                onClick={() => setImageFiles(imageFiles.filter((_, i) => i !== idx))}
-                                title="Remove"
-                              >
-                                &times;
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
                       <button type="submit" className="btn-primary w-full">Add Product</button>
                     </form>
                   </div>

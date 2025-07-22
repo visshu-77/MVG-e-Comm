@@ -9,21 +9,21 @@ import 'swiper/css/pagination';
 
 const slides = [
   {
-    image: './images/banner_1.jpg',
+    image: './images/banner_1.png',
     headline: 'Discover Amazing Products',
     subheadline: 'Shop from thousands of verified sellers and find the best deals on quality products.',
     buttonText: 'Shop Now',
     buttonLink: '/products',
   },
   {
-    image: './images/banner_3.jpg',
+    image: './images/banner_3.png',
     headline: 'Trendy Collections',
     subheadline: 'Explore the latest trends and exclusive offers from top brands.',
     buttonText: 'Shop Now',
     buttonLink: '/products',
   },
   {
-    image: './images/banner_2.jpg',
+    image: './images/banner_2.png',
     headline: 'Quality Guaranteed',
     subheadline: 'Only the best products from trusted sellers, with easy returns.',
     buttonText: 'Shop Now',
@@ -43,7 +43,6 @@ const HeroCarousel = () => {
       <Swiper
         modules={[Autoplay, Navigation, Pagination, A11y]}
         autoplay={{ delay: 4000, disableOnInteraction: false }}
-        navigation
         pagination={{ clickable: true }}
         loop
         a11y={{
@@ -73,20 +72,7 @@ const HeroCarousel = () => {
                 variants={contentVariants}
                 viewport={{ once: true }}
               >
-                <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 drop-shadow-lg">
-                  {slide.headline}
-                </h1>
-                <p className="text-xl md:text-2xl text-white mb-8 drop-shadow-md">
-                  {slide.subheadline}
-                </p>
-                <Link
-                  to={slide.buttonLink}
-                  className="inline-block bg-white text-primary-600 px-8 py-3 rounded-lg font-semibold shadow-lg hover:bg-primary-600 hover:text-white transition-colors text-lg md:text-xl animate-bounce"
-                  tabIndex={0}
-                  aria-label={slide.buttonText}
-                >
-                  {slide.buttonText}
-                </Link>
+              
               </motion.div>
             </div>
           </SwiperSlide>
