@@ -206,13 +206,8 @@ const Header = () => {
 
           {/* Right: Chat, Dashboard, Icons & User */}
           <div className="flex items-center space-x-2 md:space-x-3">
-            {/* Chat */}
-            <Link to="/chat" className="p-2 text-gray-600 hover:text-primary-600 flex items-center relative transition-colors duration-200">
-              <FaComments className="text-lg md:text-xl" />
-              {totalUnread > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 animate-pulse">{totalUnread}</span>
-              )}
-            </Link>
+          
+          
             {/* Dashboard (Seller/Admin) */}
             {isAuthenticated && user?.role === 'seller' && (
               <Link to="/seller/dashboard" className="p-2 text-gray-600 hover:text-primary-600 flex items-center transition-colors duration-200">
@@ -316,12 +311,7 @@ const Header = () => {
             {(!isAuthenticated || (user && user.role !== 'seller') || (user && user.role === 'admin')) && (
               <Link to="/vendor-registration" className="nav-link px-2 py-2 rounded hover:bg-primary-50 hover:text-primary-600 transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>Become a Vendor</Link>
             )}
-            <Link to="/chat" className="nav-link flex items-center relative px-2 py-2 rounded hover:bg-primary-50 hover:text-primary-600 transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
-              <FaComments className="mr-1" /> Chat
-              {totalUnread > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 animate-pulse">{totalUnread}</span>
-              )}
-            </Link>
+           
             {isAuthenticated && user?.role === 'seller' && (
               <Link to="/seller/dashboard" className="nav-link px-2 py-2 rounded hover:bg-primary-50 hover:text-primary-600 transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>Seller Dashboard</Link>
             )}

@@ -66,7 +66,7 @@ const ProductDetailPage = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-600"></div>
       </div>
     );
   }
@@ -76,7 +76,7 @@ const ProductDetailPage = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">Product not found</h2>
-          <Link to="/products" className="text-blue-600 hover:text-blue-800">
+          <Link to="/products" className="text-green-600 hover:text-green-800">
             Back to Products
           </Link>
         </div>
