@@ -112,7 +112,7 @@ const ProductDetail = ({ product, onAddToCart, onWishlist, onShare }) => {
               <button
                 key={idx}
                 onClick={() => setSelectedImage(idx)}
-                className={`border-2 rounded-lg overflow-hidden w-16 h-16 ${selectedImage === idx ? 'border-blue-600' : 'border-gray-300'}`}
+                className={`border-2 rounded-lg overflow-hidden w-16 h-16 ${selectedImage === idx ? 'border-green-600' : 'border-gray-300'}`}
               >
                 <img
                   src={img.url}
@@ -136,7 +136,7 @@ const ProductDetail = ({ product, onAddToCart, onWishlist, onShare }) => {
                 {Array.isArray(product.features) && product.features.length > 0 ? (
                   product.features.map((feature, index) => (
                     <li key={index} className="flex items-center text-gray-600">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full mr-3"></div>
+                      <div className="w-2 h-2 bg-green-600 rounded-full mr-3"></div>
                       {feature}
                     </li>
                   ))
@@ -186,7 +186,7 @@ const ProductDetail = ({ product, onAddToCart, onWishlist, onShare }) => {
             <span className="text-gray-600 text-sm">{product.rating || 0} ({product.numReviews || 0} reviews)</span>
           </div>
           <div className="flex items-end gap-3 mb-2">
-            <span className="text-3xl font-bold text-blue-600">{formatINR(currentVariantData.price)}</span>
+            <span className="text-3xl font-bold text-green-600">{formatINR(currentVariantData.price)}</span>
             {currentVariantData.comparePrice > currentVariantData.price && (
               <span className="text-lg text-gray-500 line-through">{formatINR(currentVariantData.comparePrice)}</span>
             )}
@@ -197,7 +197,7 @@ const ProductDetail = ({ product, onAddToCart, onWishlist, onShare }) => {
           {/* Offers/Icons */}
           <div className="flex flex-wrap gap-3 mb-2">
             <div className="flex items-center gap-2 bg-yellow-50 px-3 py-1 rounded text-yellow-800 text-xs font-medium"><FaTag /> Cashback Offer</div>
-            <div className="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded text-blue-800 text-xs font-medium"><FaCheckCircle /> Free Delivery</div>
+            <div className="flex items-center gap-2 bg-green-50 px-3 py-1 rounded text-green-800 text-xs font-medium"><FaCheckCircle /> Free Delivery</div>
             <div className="flex items-center gap-2 bg-green-50 px-3 py-1 rounded text-green-800 text-xs font-medium"><FaShieldAlt /> 2 Year Warranty</div>
             <div className="flex items-center gap-2 bg-gray-50 px-3 py-1 rounded text-gray-800 text-xs font-medium"><FaUndo /> 30 Day Returns</div>
           </div>
@@ -239,13 +239,13 @@ const ProductDetail = ({ product, onAddToCart, onWishlist, onShare }) => {
                 onAddToCart && onAddToCart(product, quantity, selectedVariants);
               }}
               disabled={currentVariantData.stock <= 0}
-              className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               <FaShoppingCart /> Add to Cart
             </button>
             <button
               onClick={() => onWishlist && onWishlist(product)}
-              className="flex-1 border border-blue-600 text-blue-600 py-3 px-6 rounded-lg hover:bg-blue-50 flex items-center justify-center gap-2"
+              className="flex-1 border border-green-600 text-green-600 py-3 px-6 rounded-lg hover:bg-green-50 flex items-center justify-center gap-2"
             >
               <FaHeart /> Wishlist
             </button>
@@ -266,10 +266,10 @@ const ProductDetail = ({ product, onAddToCart, onWishlist, onShare }) => {
             </button>
           )}
           <div className="bg-gray-50 rounded-lg p-4 flex flex-wrap gap-4 items-center">
-            <div className="flex items-center gap-2 text-gray-700"><FaSyncAlt className="text-blue-600" /> 10 days Service Centre Replacement</div>
-            <div className="flex items-center gap-2 text-gray-700"><FaTruck className="text-blue-600" /> Free Delivery</div>
-            <div className="flex items-center gap-2 text-gray-700"><FaShieldAlt className="text-blue-600" /> Warranty Policy</div>
-            <div className="flex items-center gap-2 text-gray-700"><FaCheckCircle className="text-blue-600" /> Top Brand</div>
+            <div className="flex items-center gap-2 text-gray-700"><FaSyncAlt className="text-green-600" /> 10 days Service Centre Replacement</div>
+            <div className="flex items-center gap-2 text-gray-700"><FaTruck className="text-green-600" /> Free Delivery</div>
+            <div className="flex items-center gap-2 text-gray-700"><FaShieldAlt className="text-green-600" /> Warranty Policy</div>
+            <div className="flex items-center gap-2 text-gray-700"><FaCheckCircle className="text-green-600" /> Top Brand</div>
           </div>
           {/* Reviews Section */}
           <div className="mt-10">
@@ -294,7 +294,7 @@ const ProductDetail = ({ product, onAddToCart, onWishlist, onShare }) => {
                       <span className="text-xs text-gray-400 ml-2">{review.createdAt ? new Date(review.createdAt).toLocaleDateString() : ''}</span>
                       {isUserReview && !editingReview && (
                         <>
-                          <button className="ml-2 text-blue-600 text-xs underline" onClick={() => { setEditingReview(true); setEditText(safeComment); setEditRating(safeRating); }}>Edit</button>
+                          <button className="ml-2 text-green-600 text-xs underline" onClick={() => { setEditingReview(true); setEditText(safeComment); setEditRating(safeRating); }}>Edit</button>
                           <button className="ml-2 text-red-600 text-xs underline" onClick={async () => {
                             if (window.confirm('Delete your review?')) {
                               await productAPI.deleteReview(product._id);
@@ -323,7 +323,7 @@ const ProductDetail = ({ product, onAddToCart, onWishlist, onShare }) => {
                           ))}
                         </div>
                         <textarea className="w-full border rounded p-2 mb-2" rows={3} value={editText} onChange={e => setEditText(e.target.value)} required />
-                        <button type="submit" className="bg-blue-600 text-white px-3 py-1 rounded mr-2">Save</button>
+                        <button type="submit" className="bg-green-600 text-white px-3 py-1 rounded mr-2">Save</button>
                         <button type="button" className="bg-gray-300 text-gray-700 px-3 py-1 rounded" onClick={() => setEditingReview(false)}>Cancel</button>
                       </form>
                     ) : (
@@ -364,7 +364,7 @@ const ProductDetail = ({ product, onAddToCart, onWishlist, onShare }) => {
                 {reviewSuccess && <div className="text-green-600 text-sm mb-2">{reviewSuccess}</div>}
                 <button
                   type="submit"
-                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
                   disabled={reviewLoading || !reviewRating || !reviewText}
                 >
                   {reviewLoading ? 'Submitting...' : 'Submit Review'}

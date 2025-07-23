@@ -17,7 +17,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="col-span-1 md:col-span-2">
-            <h3 className="text-2xl font-bold text-primary-400 mb-4">MV Store</h3>
+            <h3 className="text-2xl font-bold text-primary-400 mb-4">MVG Store</h3>
             <p className="text-gray-300 mb-4">
               Your trusted multi-vendor e-commerce platform. Discover amazing products from verified sellers worldwide.
             </p>
@@ -123,7 +123,7 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="border-t border-gray-800 mt-8 pt-8 text-center">
           <p className="text-gray-400">
-            © {new Date().getFullYear()} MV Store. All rights reserved.
+            © {new Date().getFullYear()} MVG Store. All rights reserved.
           </p>
         </div>
       </div>

@@ -55,7 +55,7 @@ const ProductCard = ({
       <div className="flex-1 flex flex-col justify-between p-2 sm:p-4 h-full">
         <div>
           <Link to={`/products/${product._id}`}> 
-            <h3 className="text-sm sm:text-base font-bold text-gray-800 mb-0.5 sm:mb-1 hover:text-blue-600 transition-colors line-clamp-1">
+            <h3 className="text-sm sm:text-base font-bold text-gray-800 mb-0.5 sm:mb-1 hover:text-green-600 transition-colors line-clamp-1">
               {product.name}
             </h3>
           </Link>
@@ -86,13 +86,13 @@ const ProductCard = ({
         </div>
         <div className="flex flex-row items-center justify-between gap-2 pt-2 mt-auto w-full">
           {showPrice && (
-            <span className="text-sm sm:text-lg font-bold text-blue-600">
+            <span className="text-sm sm:text-lg font-bold text-green-600">
               {product.price ? (product.price.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })) : ''}
             </span>
           )}
           {showAddToCart && (
             <button
-              className="bg-blue-600 text-white px-2 py-1 sm:px-3 sm:py-1 rounded-lg hover:bg-blue-700 transition-all duration-200 flex items-center gap-1 shadow-md w-auto justify-center text-xs sm:text-sm"
+              className="bg-green-600 text-white px-2 py-1 sm:px-3 sm:py-1 rounded-lg hover:bg-green-700 transition-all duration-200 flex items-center gap-1 shadow-md w-auto justify-center text-xs sm:text-sm"
               style={{ minHeight: '28px' }}
               onClick={() => handleAddToCart?.(product)}
             >

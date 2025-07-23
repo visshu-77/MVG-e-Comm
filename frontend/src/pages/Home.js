@@ -18,7 +18,6 @@ import productAPI from '../api/productAPI';
 import CategoriesGrid from '../components/common/CategoriesGrid';
 import HeroCarousel from '../components/common/HeroCarousel';
 import EventBanner from '../components/common/EventBanner';
-import BrandMarquee from '../components/common/BrandMarquee';
 import ProductCard from '../components/common/ProductCard';
 import { fetchWishlist, addToWishlist, removeFromWishlist } from '../redux/slices/wishlistSlice';
 
@@ -217,7 +216,7 @@ const Home = () => {
             </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {discoverProducts.map((product) => (
+            {discoverProducts.slice(0, 8).map((product) => (
               <ProductCard
                 key={product._id}
                 product={product}
@@ -234,8 +233,8 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Brand Marquee Section */}
-      <BrandMarquee />
+   
+    
 
       {/* Products You Might Like Section */}
       <section className="py-16">
@@ -251,7 +250,7 @@ const Home = () => {
             </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {recommendedProducts.map((product) => (
+            {recommendedProducts.slice(0, 8).map((product) => (
               <ProductCard
                 key={product._id}
                 product={product}

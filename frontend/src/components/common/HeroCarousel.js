@@ -39,7 +39,7 @@ const contentVariants = {
 
 const HeroCarousel = () => {
   return (
-    <section className="relative w-full min-h-[60vh] md:min-h-[80vh] flex items-center justify-center overflow-hidden">
+    <section className="relative w-full min-h-[30vh] md:min-h-[90vh] flex items-center justify-center overflow-hidden">
       <Swiper
         modules={[Autoplay, Navigation, Pagination, A11y]}
         autoplay={{ delay: 4000, disableOnInteraction: false }}
@@ -59,11 +59,11 @@ const HeroCarousel = () => {
                 backgroundImage: `url(${slide.image})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
-                filter: 'brightness(0.7)',
+                filter: 'brightness(1)',
               }}
               aria-hidden="true"
             />
-            <div className="relative z-10 flex flex-col items-center justify-center h-[60vh] md:h-[80vh] px-4">
+            <div className="relative z-10 flex flex-col items-center justify-center h-[30vh] md:h-[90vh] px-4">
               <motion.div
                 className="text-center"
                 initial="initial"
