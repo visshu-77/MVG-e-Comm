@@ -415,7 +415,7 @@ exports.deleteVariantOption = asyncHandler(async (req, res) => {
   }
 
   variant.options.splice(optionIndex, 1);
-  
+
   // If no options left, remove the entire variant group
   if (variant.options.length === 0) {
     product.variants = product.variants.filter(v => v.name !== variantName);
@@ -590,3 +590,50 @@ exports.unsetRecommendedProduct = async (req, res) => {
   await product.save();
   res.json(product);
 }; 
+
+// exports.createProductBySellerSimple = async (req, res) => {
+//   try {
+//     const { name, price, category, subCategory } = req.body;
+
+//     // Validate required fields
+//     if (!name || !price || !category || !subCategory) {
+//       return res.status(400).json({ message: 'Please provide name, price, category, and subCategory' });
+//     }
+
+//     // Check if category and subCategory exist
+//     const categoryExists = await Category.findById(category);
+//     const subCategoryExists = await Category.findById(subCategory);
+
+//     if (!categoryExists || !subCategoryExists) {
+//       return res.status(400).json({ message: 'Invalid category or subCategory ID' });
+//     }
+
+//     // Get seller from logged-in user
+//     const seller = await Seller.findOne({ userId: req.user._id });
+//     if (!seller) {
+//       return res.status(403).json({ message: 'Seller account not found' });
+//     }
+
+//     // Create product with default values for missing fields
+//     const product = await Product.create({
+//       name,
+//       price,
+//       category,
+//       subCategory,
+//       seller: seller._id,
+//       description: 'Default description',
+//       brand: 'No Brand',
+//       stock: 10,
+//       sku: 'SKU-' + Date.now()
+//     });
+
+//     res.status(201).json({
+//       success: true,
+//       message: 'Product created successfully',
+//       product
+//     });
+//   } catch (error) {
+//     console.error('Create product error:', error.message);
+//     res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+//   }
+// };

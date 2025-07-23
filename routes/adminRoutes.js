@@ -15,6 +15,7 @@ router.get('/sellers', adminController.getSellers);
 router.put('/sellers/:id/approve', adminController.approveSeller);
 router.put('/sellers/:id/reject', adminController.rejectSeller);
 router.get('/products', adminController.getProducts);
+router.post('/create-product',adminController.createProductByAdmin);
 router.put('/products/:id/approve', adminController.approveProduct);
 router.put('/products/:id/reject', adminController.rejectProduct);
 router.get('/orders', adminController.getOrders);

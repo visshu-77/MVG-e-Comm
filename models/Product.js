@@ -74,7 +74,7 @@ const variantOptionSchema = new mongoose.Schema({
   },
   sku: {
     type: String,
-    required: true,
+   required: true,
     // unique: true // Temporarily removed for seeding without variants
   },
   images: [{
@@ -124,7 +124,7 @@ const productSchema = new mongoose.Schema({
   },
   description: {
     type: String,
-    required: [true, 'Please provide a product description'],
+    // required: [true, 'Please provide a product description'],
     maxlength: [2000, 'Description cannot exceed 2000 characters']
   },
   shortDescription: {
@@ -162,7 +162,7 @@ const productSchema = new mongoose.Schema({
   },
   brand: {
     type: String,
-    required: [true, 'Please provide a brand']
+    // required: [true, 'Please provide a brand']
   },
   seller: {
     type: mongoose.Schema.Types.ObjectId,
@@ -171,7 +171,7 @@ const productSchema = new mongoose.Schema({
   },
   sku: {
     type: String,
-    required: [true, 'Please provide a SKU']
+    // required: [true, 'Please provide a SKU']
   },
   stock: {
     type: Number,

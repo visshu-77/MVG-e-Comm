@@ -61,6 +61,7 @@ exports.getProducts = async (req, res) => {
 };
 
 // Create a new product for the current seller
+
 // exports.createProduct = async (req, res) => {
 //   try {
 //     const seller = await Seller.findOne({ userId: req.user._id });
@@ -188,88 +189,145 @@ exports.getProducts = async (req, res) => {
 //   }
 // };
 
+// exports.createProduct = async (req, res) => {
+//   try {
+//     const seller = await Seller.findOne({ userId: req.user._id });
+//     if (!seller) return res.status(404).json({ message: 'Seller not found' });
+
+//     // Image handling (optional – fallback image if nothing uploaded)
+//     let imageUrls = [];
+//     if (req.files && req.files.length > 0) {
+//       for (const file of req.files) {
+//         try {
+//           const uploadResult = await new Promise((resolve, reject) => {
+//             const stream = cloudinary.uploader.upload_stream({ folder: 'products' }, (error, result) => {
+//               if (error) return reject(error);
+//               resolve(result);
+//             });
+//             stream.end(file.buffer);
+//           });
+//           imageUrls.push({ url: uploadResult.secure_url });
+//         } catch (uploadError) {
+//           console.error('Image upload failed:', uploadError);
+//           return res.status(500).json({ message: 'Image upload failed', error: uploadError.message });
+//         }
+//       }
+//     }
+
+//     // Fallback image
+//     if (imageUrls.length === 0) {
+//       imageUrls = [{ url: 'https://res.cloudinary.com/demo/image/upload/v1690000000/products/default-product.png' }];
+//     }
+
+//     // Handle category
+//     let categoryId = req.body.category;
+//     if (req.body.customCategory) {
+//       const slug = req.body.customCategory.toLowerCase().replace(/\s+/g, '-');
+//       let category = await Category.findOne({ slug });
+//       if (!category) {
+//         category = await Category.create({ name: req.body.customCategory, slug });
+//       }
+//       categoryId = category._id;
+//     }
+
+//     // Validate category and subCategory IDs
+//     if (categoryId && !mongoose.Types.ObjectId.isValid(categoryId)) {
+//       return res.status(400).json({ message: 'Invalid category ID' });
+//     }
+
+//     const subCategoryId = req.body.subCategory;
+//     if (subCategoryId && !mongoose.Types.ObjectId.isValid(subCategoryId)) {
+//       return res.status(400).json({ message: 'Invalid subCategory ID' });
+//     }
+
+//     // Required fields
+//     const { name, price } = req.body;
+
+//     if (!name || !price || !categoryId || !subCategoryId) {
+//       return res.status(400).json({ message: 'Name, price, category, and subCategory are required.' });
+//     }
+
+//     const priceNum = Number(price);
+//     if (isNaN(priceNum)) {
+//       return res.status(400).json({ message: 'Price must be a number.' });
+//     }
+
+//     const product = new Product({
+//       name,
+//       price: priceNum,
+//       images: imageUrls,
+//       category: categoryId,
+//       subCategory: subCategoryId,
+//       seller: seller._id,
+//       isActive: true,
+//       isApproved: false, // Requires admin approval
+//     });
+
+//     await product.save();
+//     res.status(201).json(product);
+//   } catch (error) {
+//     console.error('Product creation error:', error);
+//     res.status(500).json({ message: 'Server error', error: error.message });
+//   }
+// };
+
 exports.createProduct = async (req, res) => {
   try {
     const seller = await Seller.findOne({ userId: req.user._id });
     if (!seller) return res.status(404).json({ message: 'Seller not found' });
 
-    // Image handling (optional – fallback image if nothing uploaded)
+    const { name, price, category, subCategory } = req.body;
+
+    if (!name || !price || !category || !subCategory) {
+      return res.status(400).json({ message: 'Name, price, category, and subCategory are required.' });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(category)) {
+      return res.status(400).json({ message: 'Invalid category ID' });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(subCategory)) {
+      return res.status(400).json({ message: 'Invalid subCategory ID' });
+    }
+
+    // Image optional
     let imageUrls = [];
     if (req.files && req.files.length > 0) {
       for (const file of req.files) {
-        try {
-          const uploadResult = await new Promise((resolve, reject) => {
-            const stream = cloudinary.uploader.upload_stream({ folder: 'products' }, (error, result) => {
-              if (error) return reject(error);
-              resolve(result);
-            });
-            stream.end(file.buffer);
+        const uploadResult = await new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream({ folder: 'products' }, (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
           });
-          imageUrls.push({ url: uploadResult.secure_url });
-        } catch (uploadError) {
-          console.error('Image upload failed:', uploadError);
-          return res.status(500).json({ message: 'Image upload failed', error: uploadError.message });
-        }
+          stream.end(file.buffer);
+        });
+        imageUrls.push({ url: uploadResult.secure_url });
       }
     }
 
-    // Fallback image
+    // Add fallback image
     if (imageUrls.length === 0) {
       imageUrls = [{ url: 'https://res.cloudinary.com/demo/image/upload/v1690000000/products/default-product.png' }];
     }
 
-    // Handle category
-    let categoryId = req.body.category;
-    if (req.body.customCategory) {
-      const slug = req.body.customCategory.toLowerCase().replace(/\s+/g, '-');
-      let category = await Category.findOne({ slug });
-      if (!category) {
-        category = await Category.create({ name: req.body.customCategory, slug });
-      }
-      categoryId = category._id;
-    }
-
-    // Validate category and subCategory IDs
-    if (categoryId && !mongoose.Types.ObjectId.isValid(categoryId)) {
-      return res.status(400).json({ message: 'Invalid category ID' });
-    }
-
-    const subCategoryId = req.body.subCategory;
-    if (subCategoryId && !mongoose.Types.ObjectId.isValid(subCategoryId)) {
-      return res.status(400).json({ message: 'Invalid subCategory ID' });
-    }
-
-    // Required fields
-    const { name, price } = req.body;
-
-    if (!name || !price || !categoryId || !subCategoryId) {
-      return res.status(400).json({ message: 'Name, price, category, and subCategory are required.' });
-    }
-
-    const priceNum = Number(price);
-    if (isNaN(priceNum)) {
-      return res.status(400).json({ message: 'Price must be a number.' });
-    }
-
     const product = new Product({
       name,
-      price: priceNum,
+      price: Number(price),
       images: imageUrls,
-      category: categoryId,
-      subCategory: subCategoryId,
+      category,
+      subCategory,
       seller: seller._id,
       isActive: true,
-      isApproved: false, // Requires admin approval
+      isApproved: false,
     });
 
     await product.save();
     res.status(201).json(product);
   } catch (error) {
-    console.error('Product creation error:', error);
+    console.error('Error creating simple product:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
-
 
 
 exports.updateProduct = async (req, res) => {

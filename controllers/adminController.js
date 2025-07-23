@@ -1,6 +1,8 @@
+const mongoose = require('mongoose');
 const Seller = require('../models/Seller');
 const User = require('../models/User');
 const { asyncHandler } = require('../middleware/errorMiddleware');
+const Product = require('../models/Product');
 
 // Get all sellers (with approval status)
 exports.getSellers = asyncHandler(async (req, res) => {
@@ -34,10 +36,69 @@ exports.rejectSeller = asyncHandler(async (req, res) => {
   res.json({ message: 'Seller rejected', seller });
 });
 
+
+
 // Placeholder: Get admin dashboard
 exports.getDashboard = (req, res) => {
   res.json({ message: 'Get admin dashboard' });
 };
+
+
+// Create product by admin
+exports.createProductByAdmin = asyncHandler(async (req, res) => {
+  const {
+    name,
+    price,
+    description,
+    productDescription,
+    sku,
+    category,
+    subCategory,
+    stock,
+    images
+  } = req.body;
+
+  // Validate required fields
+  if (
+    !name ||
+    !price ||
+    !description ||
+    !productDescription ||
+    !sku ||
+    !category ||
+    !subCategory ||
+    stock == null ||
+    !images ||
+    !Array.isArray(images) ||
+    images.length === 0
+  ) {
+    return res.status(400).json({ message: 'Please provide all required fields' });
+  }
+
+  // Validate ObjectIds
+  if (!mongoose.Types.ObjectId.isValid(category) || !mongoose.Types.ObjectId.isValid(subCategory)) {
+    return res.status(400).json({ message: 'Invalid category or subCategory ID' });
+  }
+
+  const product = new Product({
+    name,
+    price,
+    description,
+    productDescription,
+    sku,
+    category,
+    subCategory,
+    stock,
+    images,
+    isActive: true,
+    isApproved: true,
+    approvedBy: req.user._id,
+    seller: req.body.seller
+  });
+
+  await product.save();
+  res.status(201).json({ message: 'Product created successfully by admin', product });
+});
 
 // Get all users
 exports.getUsers = asyncHandler(async (req, res) => {
