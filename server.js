@@ -11,6 +11,7 @@ const User = require('./models/User');
 const Message = require('./models/Message');
 const Conversation = require('./models/Conversation');
 
+
 // Load environment variables
 dotenv.config();
 
@@ -25,6 +26,7 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const couponRoutes = require('./routes/couponRoutes');
 const translateRoutes = require('./routes/translateRoutes');
+const withdrawalRoutes = require('./routes/withdrawalRoutes');
 
 // Import middleware
 const { errorHandler } = require('./middleware/errorMiddleware');
@@ -141,6 +143,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/coupons', couponRoutes);
 app.use('/api/translate', translateRoutes);
+app.use('/api/withdrawals', withdrawalRoutes);
 
 // Test route to verify server is working
 app.get('/api/test', (req, res) => {
