@@ -22,4 +22,3 @@ router.get('/orders', adminController.getOrders);
 router.get('/analytics', adminController.getAnalytics);
 
 module.exports = router; 
- 

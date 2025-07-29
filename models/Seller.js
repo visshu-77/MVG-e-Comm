@@ -23,9 +23,23 @@ const sellerSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please provide an email']
   },
+  pincode:{
+    type:String,
+    required : [false, "please provide the pincode"]
+  },
+  location : {
+    lat:{
+      type: Number,
+      required: false
+    },
+    lng:{
+      type: Number,
+      required: false
+    },
+  },
   isApproved: {
     type: Boolean,
-    default: true
+    default: false
   },
   approvalDate: Date,
   approvedBy: {

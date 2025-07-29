@@ -1,6 +1,9 @@
 const Product = require('../models/Product');
 const { asyncHandler } = require('../middleware/errorMiddleware');
 const EventBanner = require('../models/EventBanner');
+const Withdrawal = require("../models/withdrawalModel");
+const Seller = require("../models/Seller");
+const catchAsyncErrors = require("../middleware/catchAsyncErrors");
 
 // Get all products
 exports.getProducts = asyncHandler(async (req, res) => {
@@ -591,49 +594,88 @@ exports.unsetRecommendedProduct = async (req, res) => {
   res.json(product);
 }; 
 
-// exports.createProductBySellerSimple = async (req, res) => {
-//   try {
-//     const { name, price, category, subCategory } = req.body;
+// Create Withdrawal Request
+exports.createWithdrawal = catchAsyncErrors(async (req, res, next) => {
+  const seller = await Seller.findOne({ user: req.user._id });
 
-//     // Validate required fields
-//     if (!name || !price || !category || !subCategory) {
-//       return res.status(400).json({ message: 'Please provide name, price, category, and subCategory' });
-//     }
+  if (!seller) {
+    return next(new ErrorHandler("Seller not found", 404));
+  }
 
-//     // Check if category and subCategory exist
-//     const categoryExists = await Category.findById(category);
-//     const subCategoryExists = await Category.findById(subCategory);
+  const { amount } = req.body;
 
-//     if (!categoryExists || !subCategoryExists) {
-//       return res.status(400).json({ message: 'Invalid category or subCategory ID' });
-//     }
+  if (!amount || amount <= 0) {
+    return next(new ErrorHandler("Invalid withdrawal amount", 400));
+  }
 
-//     // Get seller from logged-in user
-//     const seller = await Seller.findOne({ userId: req.user._id });
-//     if (!seller) {
-//       return res.status(403).json({ message: 'Seller account not found' });
-//     }
+  if (seller.availableBalance < amount) {
+    return next(new ErrorHandler("Insufficient balance", 400));
+  }
 
-//     // Create product with default values for missing fields
-//     const product = await Product.create({
-//       name,
-//       price,
-//       category,
-//       subCategory,
-//       seller: seller._id,
-//       description: 'Default description',
-//       brand: 'No Brand',
-//       stock: 10,
-//       sku: 'SKU-' + Date.now()
-//     });
+  // Deduct from available balance
+  seller.availableBalance -= amount;
+  await seller.save();
 
-//     res.status(201).json({
-//       success: true,
-//       message: 'Product created successfully',
-//       product
-//     });
-//   } catch (error) {
-//     console.error('Create product error:', error.message);
-//     res.status(500).json({ success: false, message: 'Server Error', error: error.message });
-//   }
-// };
+  const withdrawal = await Withdrawal.create({
+    seller: seller._id,
+    amount,
+    status: "Pending"
+  });
+
+  res.status(201).json({
+    success: true,
+    withdrawal
+  });
+});
+
+// Get All Withdrawal Requests - Admin or Seller
+exports.getAllWithdrawals = catchAsyncErrors(async (req, res, next) => {
+  let withdrawals;
+  if (req.user.role === "admin") {
+    withdrawals = await Withdrawal.find().populate("seller", "shopName");
+  } else {
+    const seller = await Seller.findOne({ user: req.user._id });
+    if (!seller) {
+      return next(new ErrorHandler("Seller not found", 404));
+    }
+    withdrawals = await Withdrawal.find({ seller: seller._id });
+  }
+
+  res.status(200).json({
+    success: true,
+    withdrawals
+  });
+});
+
+// Update Withdrawal Status - Admin Only
+exports.updateWithdrawalStatus = catchAsyncErrors(async (req, res, next) => {
+  if (req.user.role !== "admin") {
+    return next(new ErrorHandler("Only admin can update withdrawal status", 403));
+  }
+
+  const withdrawal = await Withdrawal.findById(req.params.id);
+  if (!withdrawal) {
+    return next(new ErrorHandler("Withdrawal not found", 404));
+  }
+
+  const { status } = req.body;
+
+  if (!["Pending", "Completed", "Rejected"].includes(status)) {
+    return next(new ErrorHandler("Invalid status", 400));
+  }
+
+  // If rejected, refund the amount
+  if (withdrawal.status === "Pending" && status === "Rejected") {
+    const seller = await Seller.findById(withdrawal.seller);
+    seller.availableBalance += withdrawal.amount;
+    await seller.save();
+  }
+
+  withdrawal.status = status;
+  await withdrawal.save();
+
+  res.status(200).json({
+    success: true,
+    withdrawal
+  });
+});

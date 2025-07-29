@@ -46,34 +46,21 @@ const orderSchema = new mongoose.Schema({
     required: true
   },
   orderItems: [orderItemSchema],
+
   shippingAddress: {
     type: {
       type: String,
       enum: ['home', 'work', 'other'],
       default: 'home'
     },
-    street: {
-      type: String,
-      required: true
-    },
-    city: {
-      type: String,
-      required: true
-    },
-    state: {
-      type: String,
-      required: true
-    },
-    zipCode: {
-      type: String,
-      required: true
-    },
-    country: {
-      type: String,
-      default: 'United States'
-    },
+    street: { type: String, required: true },
+    city:   { type: String, required: true },
+    state:  { type: String, required: true },
+    zipCode: { type: String, required: true },
+    country: { type: String, default: 'United States' },
     phone: String
   },
+
   paymentMethod: {
     type: String,
     required: true,
@@ -85,6 +72,7 @@ const orderSchema = new mongoose.Schema({
     update_time: String,
     email_address: String
   },
+
   itemsPrice: {
     type: Number,
     required: true,
@@ -105,6 +93,33 @@ const orderSchema = new mongoose.Schema({
     required: true,
     default: 0.0
   },
+
+  // ✅ Platform fee that admin earns from this order
+  platformFee: {
+    type: Number,
+    required: true,
+    default: 0.0
+  },
+
+  // ✅ Seller's earning (credited after customer confirms)
+  sellerEarnings: {
+    type: Number,
+    required: true,
+    default: 0.0
+  },
+
+  // ✅ Whether customer has confirmed receiving the product
+  isConfirmedByCustomer: {
+    type: Boolean,
+    default: false
+  },
+
+  // ✅ Whether earnings already credited to seller’s wallet
+  isSellerPaid: {
+    type: Boolean,
+    default: false
+  },
+
   orderStatus: {
     type: String,
     required: true,
@@ -123,10 +138,12 @@ const orderSchema = new mongoose.Schema({
     enum: ['pending', 'shipped', 'delivered'],
     default: 'pending'
   },
+
   trackingNumber: String,
   trackingUrl: String,
   estimatedDelivery: Date,
   deliveredAt: Date,
+
   cancelledAt: Date,
   cancelledBy: {
     type: mongoose.Schema.Types.ObjectId,
@@ -134,17 +151,13 @@ const orderSchema = new mongoose.Schema({
   },
   cancellationReason: String,
   notes: String,
+
   commission: {
     type: Number,
-    default: 0
-  },
-  sellerEarnings: {
-    type: Number,
-    default: 0
+    default: 0 // optional if platformFee is already set
   }
-}, {
-  timestamps: true
-});
+
+}, { timestamps: true });
 
 // Indexes for better query performance
 orderSchema.index({ orderNumber: 1 });
@@ -155,26 +168,25 @@ orderSchema.index({ paymentStatus: 1 });
 orderSchema.index({ createdAt: -1 });
 
 // Pre-save middleware to generate order number
-orderSchema.pre('save', async function(next) {
+orderSchema.pre('save', async function (next) {
   if (this.isNew) {
     const date = new Date();
     const year = date.getFullYear().toString().slice(-2);
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const day = date.getDate().toString().padStart(2, '0');
-    
-    // Get count of orders for today
+
     const today = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     const orderCount = await this.constructor.countDocuments({
       createdAt: { $gte: today }
     });
-    
+
     this.orderNumber = `ORD${year}${month}${day}${(orderCount + 1).toString().padStart(4, '0')}`;
   }
   next();
 });
 
-// Virtual for order summary
-orderSchema.virtual('orderSummary').get(function() {
+// Virtual for summary
+orderSchema.virtual('orderSummary').get(function () {
   return {
     totalItems: this.orderItems.reduce((sum, item) => sum + item.quantity, 0),
     totalPrice: this.totalPrice,
@@ -182,7 +194,7 @@ orderSchema.virtual('orderSummary').get(function() {
   };
 });
 
-// Ensure virtual fields are serialized
+// Serialize virtuals
 orderSchema.set('toJSON', { virtuals: true });
 
-module.exports = mongoose.model('Order', orderSchema); 
+module.exports = mongoose.model('Order', orderSchema);

@@ -25,22 +25,14 @@ exports.createOrder = asyncHandler(async (req, res) => {
   const createdOrders = [];
   for (const sellerId of Object.keys(itemsBySeller)) {
     const sellerItems = itemsBySeller[sellerId];
-    // Fetch product details for each item
     const orderItems = await Promise.all(sellerItems.map(async (item) => {
       const product = await Product.findById(item.product);
-      if (!product) {
-        const error = new Error(`Product not found: ${item.product}`);
-        error.type = 'OrderProductNotFound';
-        throw error;
-      }
-      if (!product.seller || product.seller.toString() !== sellerId) {
-        const error = new Error(`Product seller mismatch for product ${product._id}`);
-        error.type = 'OrderProductSellerMismatch';
-        throw error;
-      }
-      // Increment totalSold for the product
+      if (!product) throw new Error(`Product not found: ${item.product}`);
+      if (!product.seller || product.seller.toString() !== sellerId) throw new Error(`Product seller mismatch for product ${product._id}`);
+
       product.totalSold = (product.totalSold || 0) + item.quantity;
       await product.save();
+
       return {
         product: product._id,
         name: product.name,
@@ -50,12 +42,14 @@ exports.createOrder = asyncHandler(async (req, res) => {
         sku: product.sku || '',
       };
     }));
-    // Calculate totals
+
     const itemsPrice = orderItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
     const shippingPrice = 0;
     const taxPrice = 0;
-    const totalPrice = itemsPrice + shippingPrice + taxPrice - (discount || 0);
-    // Save order
+    const platformFee = Math.round(itemsPrice * 0.2 * 100) / 100;
+    const sellerEarnings = itemsPrice - platformFee;
+    const totalPrice = itemsPrice + shippingPrice + taxPrice;
+
     const order = new Order({
       user: userId,
       seller: sellerId,
@@ -74,6 +68,8 @@ exports.createOrder = asyncHandler(async (req, res) => {
       taxPrice,
       shippingPrice,
       totalPrice,
+      commission: platformFee,
+      sellerEarnings,
       orderStatus: 'pending',
       paymentStatus: paymentMethod === 'cod' ? 'pending' : 'pending',
       shippingStatus: 'pending',
@@ -83,58 +79,67 @@ exports.createOrder = asyncHandler(async (req, res) => {
     await order.save();
     createdOrders.push(order);
   }
+
   res.status(201).json({ orders: createdOrders });
 });
 
-// Get Orders: For user or seller
 exports.getOrders = asyncHandler(async (req, res) => {
   const userId = req.user._id;
   const isSeller = req.query.seller === 'true' || req.user.role === 'seller';
   let orders;
+
   if (isSeller) {
-    // Seller: fetch orders for this seller
     const sellerDoc = await Seller.findOne({ userId: userId });
     if (!sellerDoc) return res.json({ orders: [] });
+
     orders = await Order.find({ seller: sellerDoc._id })
-      .populate('user', 'firstName lastName email')
+      .populate('user', 'name email')
       .populate('orderItems.product', 'name');
   } else {
-    // User: fetch orders placed by this user
     orders = await Order.find({ user: userId })
       .populate('seller', 'shopName')
       .populate('orderItems.product', 'name');
   }
+
   res.json({ orders });
 });
 
-// Get single order by ID
 exports.getOrder = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id)
-    .populate('user', 'firstName lastName email')
+    .populate('user', 'name email')
     .populate('seller', 'shopName')
     .populate('orderItems.product', 'name');
+
   if (!order) return res.status(404).json({ message: 'Order not found', route: req.originalUrl || req.url });
+
   res.json(order);
 });
 
-// Update order status (for seller)
 exports.updateOrderStatus = asyncHandler(async (req, res) => {
   const { status } = req.body;
   const order = await Order.findById(req.params.id);
+
   if (!order) return res.status(404).json({ message: 'Order not found', route: req.originalUrl || req.url });
+
   order.orderStatus = status;
+  if (status === 'delivered') {
+    order.deliveredAt = new Date();
+  }
+
   await order.save();
   res.json(order);
 });
 
-// Cancel order
 exports.cancelOrder = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id);
+
   if (!order) return res.status(404).json({ message: 'Order not found', route: req.originalUrl || req.url });
+
   order.orderStatus = 'cancelled';
   order.cancelledAt = new Date();
   order.cancellationReason = req.body.reason || '';
   order.cancelledBy = req.user._id;
+
   await order.save();
   res.json(order);
-}); 
+});

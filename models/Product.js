@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+// Review schema
 const reviewSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -30,29 +31,7 @@ const reviewSchema = new mongoose.Schema({
   timestamps: true
 });
 
-/**
- * Product Variant Option Schema
- * @typedef {Object} VariantOption
- * @property {String} value - The value of the option (e.g., 'Black', '128GB')
- * @property {Number} price - The price for this option
- * @property {Number} [comparePrice] - The compare price for this option
- * @property {Number} stock - The stock for this option
- * @property {String} sku - The SKU for this option
- * @property {Array<{url: String, alt?: String, isPrimary?: Boolean}>} images - Images for this option
- * @property {Array<{key: String, value: String}>} specifications - Specifications for this option
- * @property {Number} [weight] - Weight for this option
- * @property {Object} [dimensions] - Dimensions for this option
- * @property {Boolean} isActive - Whether this option is active
- */
-
-/**
- * Product Variant Schema
- * @typedef {Object} Variant
- * @property {String} name - The name of the variant (e.g., 'Color', 'Storage')
- * @property {VariantOption[]} options - The options for this variant
- */
-
-// Enhanced variant schema for comprehensive product variants
+// Variant option schema
 const variantOptionSchema = new mongoose.Schema({
   value: {
     type: String,
@@ -74,8 +53,7 @@ const variantOptionSchema = new mongoose.Schema({
   },
   sku: {
     type: String,
-   required: true,
-    // unique: true // Temporarily removed for seeding without variants
+    required: true
   },
   images: [{
     url: {
@@ -107,6 +85,7 @@ const variantOptionSchema = new mongoose.Schema({
   }
 });
 
+// Variant schema
 const variantSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -115,6 +94,7 @@ const variantSchema = new mongoose.Schema({
   options: [variantOptionSchema]
 });
 
+// Product schema
 const productSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -124,7 +104,6 @@ const productSchema = new mongoose.Schema({
   },
   description: {
     type: String,
-    // required: [true, 'Please provide a product description'],
     maxlength: [2000, 'Description cannot exceed 2000 characters']
   },
   shortDescription: {
@@ -140,6 +119,19 @@ const productSchema = new mongoose.Schema({
     type: Number,
     min: [0, 'Compare price cannot be negative']
   },
+
+  // ✅ New fields for fee logic
+  platformFee: {
+    type: Number,
+    default: 0,
+    min: [0, 'Platform fee cannot be negative']
+  },
+  displayPrice: {
+    type: Number,
+    default: 0,
+    min: [0, 'Display price cannot be negative']
+  },
+
   images: [{
     url: {
       type: String,
@@ -161,8 +153,7 @@ const productSchema = new mongoose.Schema({
     ref: 'Category'
   },
   brand: {
-    type: String,
-    // required: [true, 'Please provide a brand']
+    type: String
   },
   seller: {
     type: mongoose.Schema.Types.ObjectId,
@@ -170,8 +161,7 @@ const productSchema = new mongoose.Schema({
     required: [true, 'Please provide a seller']
   },
   sku: {
-    type: String,
-    // required: [true, 'Please provide a SKU']
+    type: String
   },
   stock: {
     type: Number,
@@ -193,9 +183,7 @@ const productSchema = new mongoose.Schema({
     height: Number
   },
   variants: [variantSchema],
-  features: [{
-    type: String
-  }],
+  features: [String],
   specifications: [{
     key: String,
     value: String
@@ -279,7 +267,7 @@ const productSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Indexes for better query performance
+// Indexes
 productSchema.index({ name: 'text', description: 'text', brand: 'text' });
 productSchema.index({ category: 1 });
 productSchema.index({ seller: 1 });
@@ -288,42 +276,38 @@ productSchema.index({ isFeatured: 1 });
 productSchema.index({ isApproved: 1 });
 productSchema.index({ sku: 1 });
 
-// Virtual for average rating
-productSchema.virtual('averageRating').get(function() {
+// Virtuals
+productSchema.virtual('averageRating').get(function () {
   return this.numReviews > 0 ? this.ratings / this.numReviews : 0;
 });
 
-// Virtual for discount percentage
-productSchema.virtual('discountPercentage').get(function() {
+productSchema.virtual('discountPercentage').get(function () {
   if (this.comparePrice && this.comparePrice > this.price) {
     return Math.round(((this.comparePrice - this.price) / this.comparePrice) * 100);
   }
   return 0;
 });
 
-// Virtual for in stock status
-productSchema.virtual('inStock').get(function() {
+productSchema.virtual('inStock').get(function () {
   return this.stock > 0;
 });
 
-// Ensure virtual fields are serialized
 productSchema.set('toJSON', { virtuals: true });
 
-// Pre-save middleware to update approval date
-productSchema.pre('save', function(next) {
+// Pre-save for approval date
+productSchema.pre('save', function (next) {
   if (this.isModified('isApproved') && this.isApproved && !this.approvalDate) {
     this.approvalDate = new Date();
   }
   next();
 });
 
-// Instance method to get variant by combination
-productSchema.methods.getVariantByCombination = function(variantCombination) {
+// Custom methods
+productSchema.methods.getVariantByCombination = function (variantCombination) {
   if (!this.variants || this.variants.length === 0) {
     return null;
   }
 
-  // Find the variant option that matches the combination
   for (const variant of this.variants) {
     for (const option of variant.options) {
       if (option.value === variantCombination[variant.name]) {
@@ -334,21 +318,15 @@ productSchema.methods.getVariantByCombination = function(variantCombination) {
   return null;
 };
 
-// Instance method to get all available variant combinations
-productSchema.methods.getAvailableVariants = function() {
-  if (!this.variants || this.variants.length === 0) {
-    return [];
-  }
+productSchema.methods.getAvailableVariants = function () {
+  if (!this.variants || this.variants.length === 0) return [];
 
   const combinations = [];
-  
-  // Generate all possible combinations
   const generateCombinations = (variants, current = {}, index = 0) => {
     if (index === variants.length) {
       combinations.push({ ...current });
       return;
     }
-
     const variant = variants[index];
     for (const option of variant.options) {
       if (option.isActive && option.stock > 0) {
@@ -357,30 +335,23 @@ productSchema.methods.getAvailableVariants = function() {
       }
     }
   };
-
   generateCombinations(this.variants);
   return combinations;
 };
 
-// Instance method to get total stock across all variants
-productSchema.methods.getTotalStock = function() {
-  if (!this.variants || this.variants.length === 0) {
-    return this.stock;
-  }
+productSchema.methods.getTotalStock = function () {
+  if (!this.variants || this.variants.length === 0) return this.stock;
 
   let totalStock = 0;
   for (const variant of this.variants) {
     for (const option of variant.options) {
-      if (option.isActive) {
-        totalStock += option.stock;
-      }
+      if (option.isActive) totalStock += option.stock;
     }
   }
   return totalStock;
 };
 
-// Instance method to get minimum and maximum prices
-productSchema.methods.getPriceRange = function() {
+productSchema.methods.getPriceRange = function () {
   if (!this.variants || this.variants.length === 0) {
     return { min: this.price, max: this.price };
   }
@@ -397,7 +368,10 @@ productSchema.methods.getPriceRange = function() {
     }
   }
 
-  return { min: minPrice === Infinity ? this.price : minPrice, max: maxPrice === -Infinity ? this.price : maxPrice };
+  return {
+    min: minPrice === Infinity ? this.price : minPrice,
+    max: maxPrice === -Infinity ? this.price : maxPrice
+  };
 };
 
-module.exports = mongoose.model('Product', productSchema); 
+module.exports = mongoose.model('Product', productSchema);

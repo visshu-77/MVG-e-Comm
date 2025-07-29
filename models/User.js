@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -75,6 +76,38 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Product'
   }],
+
+  // ✅ Wallet added for sellers
+  wallet: {
+    balance: {
+      type: Number,
+      default: 0
+    },
+    transactions: [
+      {
+        orderId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Order'
+        },
+        amount: Number,
+        type: {
+          type: String,
+          enum: ['credit', 'debit'],
+          required: true
+        },
+        status: {
+          type: String,
+          enum: ['pending', 'completed', 'rejected'],
+          default: 'pending'
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now
+        }
+      }
+    ]
+  },
+
   isEmailVerified: {
     type: Boolean,
     default: false
@@ -92,40 +125,38 @@ const userSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Index for better query performance
+// Indexes for performance
 userSchema.index({ email: 1 });
 userSchema.index({ role: 1 });
 
-// Encrypt password before saving
+// Password encryption middleware
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) {
-    next();
+    return next();
   }
-  
+
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
+  next();
 });
 
-// Match user entered password to hashed password in database
+// Compare entered password to hashed password
 userSchema.methods.matchPassword = async function(enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// Generate and hash password token
+// Generate password reset token
 userSchema.methods.getResetPasswordToken = function() {
-  // Generate token
   const resetToken = crypto.randomBytes(20).toString('hex');
 
-  // Hash token and set to resetPasswordToken field
   this.resetPasswordToken = crypto
     .createHash('sha256')
     .update(resetToken)
     .digest('hex');
 
-  // Set expire
-  this.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+  this.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 mins
 
   return resetToken;
 };
 
-module.exports = mongoose.model('User', userSchema); 
+module.exports = mongoose.model('User', userSchema);
